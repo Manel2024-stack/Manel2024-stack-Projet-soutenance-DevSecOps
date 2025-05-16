@@ -18,7 +18,7 @@ Voici le schéma général de l'infrastructure AWS provisionnée via Terraform :
 - **Ansible** : configuration automatique des serveurs
 - **Git** : gestion de version
 
----
+```
 
 ## Structure du projet
 
@@ -32,7 +32,7 @@ Devops-AWS-project/
 ├── .gitignore
 └── README.md
 
----
+```
 
 ## Dépôts associés au projet DevSecOps
 
