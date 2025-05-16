@@ -1,0 +1,90 @@
+---
+- name: Setup CI/CD Instance with Jenkins, SonarQube, Jenkins Agent, and Trivy
+  hosts: CI_CD
+  become: true
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # Jenkins Master Configuration
+    - name: Check if Jenkins Master container exists
+      shell: "docker ps -a -q -f name=jenkins_master"
+      register: jenkins_master_container
+      ignore_errors: true
+
+    - name: Remove existing Jenkins Master container if exists
+      shell: "docker rm -f jenkins_master"
+      when: jenkins_master_container.stdout != ""
+      ignore_errors: true
+
+    - name: Run Jenkins Master container
+      command: docker run --name jenkins_master -d -p 8080:8080 -p 50000:50000 --restart=on-failure jenkins/jenkins:lts-jdk17
+
+    # Jenkins Agent Configuration
+    - name: Check if Jenkins Agent container exists
+      shell: "docker ps -a -q -f name=jenkins_agent"
+      register: jenkins_agent_container
+      ignore_errors: true
+
+    - name: Remove existing Jenkins Agent container if exists
+      shell: "docker rm -f jenkins_agent"
+      when: jenkins_agent_container.stdout != ""
+      ignore_errors: true
+
+    - name: Run Jenkins Agent container
+      command: docker run -d --name jenkins_agent -p 50001:50000 --restart=on-failure -v /var/run/docker.sock:/var/run/docker.sock jenkins/inbound-agent
+
+    # SonarQube Configuration
+    - name: Check if SonarQube container exists
+      shell: "docker ps -a -q -f name=sonarqube"
+      register: sonarqube_container
+      ignore_errors: true
+
+    - name: Remove existing SonarQube container if exists
+      shell: "docker rm -f sonarqube"
+      when: sonarqube_container.stdout != ""
+      ignore_errors: true
+
+    - name: Run SonarQube container
+      command: docker run -d --name sonarqube -p 9000:9000 --restart=on-failure sonarqube
+
+    # SSH Configuration
+    - name: Create .ssh directory for ec2-user
+      file:
+        path: /home/ec2-user/.ssh
+        state: directory
+        mode: '0700'
+        owner: ec2-user
+        group: ec2-user
+
+    - name: Copy private key to connect to other instances
+      ansible.builtin.copy:
+        src: /home/sysadmin/Devops-AWS-project/Terraform/my-key.pem
+        dest: /home/ec2-user/.ssh/my-key.pem
+        mode: '0600'
+        owner: ec2-user
+        group: ec2-user
+        remote_src: no
+
+- name: Setup Test, Production, Monitoring Instances
+  hosts: Test, Production, Monitoring
+  become: true
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true

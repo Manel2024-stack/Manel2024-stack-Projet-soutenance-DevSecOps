@@ -1,0 +1,23 @@
+# Clés SSH
+*.pem
+*.pub
+
+# Fichiers Terraform 
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+terraform.tfvars
+
+# fichier Ansible 
+ansible/host_vars/
+ansible/group_vars/
+
+# Fichiers d'environnement
+.env
+.env.*
+
+# Fichiers système et VSCode
+.vscode/
+*.log
+.DS_Store
